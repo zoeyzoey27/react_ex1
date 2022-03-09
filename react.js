@@ -1,8 +1,8 @@
 const divTag = document.getElementById("container");
 
-const User = (props) => {
+const User = (props,index) => {
     return (
-        <div key={props.name}>Name: {props.name} - Age: {props.age}</div>
+        <div key={index}>Name: {props.name} - Age: {props.age}</div>
     )
 }
 
@@ -34,6 +34,41 @@ function Component(props) {
         }
     }
 
+    var isReact = true;
+
+    function handleEdit(name,age,index){
+        let nameEdit = document.getElementById("nameEdit");
+        let ageEdit = document.getElementById("ageEdit"); 
+        let indexUser = document.getElementById("index-user"); 
+        nameEdit.value=name;
+        ageEdit.value=age;
+        indexUser.value = index;
+        if (!reactmems.some(el => el.name == nameEdit.value && el.age == ageEdit.value)) isReact = false;
+    
+    }
+
+    function handleUpdate(evt) {
+        evt.preventDefault();
+        let nameEdit = document.getElementById("nameEdit");
+        let ageEdit = document.getElementById("ageEdit"); 
+        let indexUser = document.getElementById("index-user"); 
+        if (nameEdit.value == "" || ageEdit.value == ""){
+            alert("Vui lòng nhập đầy đủ thông tin")
+        }
+        else{
+            if (isReact){
+                reactmems.splice(indexUser.value,1, {name: nameEdit.value, age: ageEdit.value});
+                setReactmems([...reactmems]);
+            }
+            else {
+                javamems.splice(indexUser.value,1, {name: nameEdit.value, age: ageEdit.value});
+                setJavamems([...javamems]);
+            }
+            nameEdit.value="";
+            ageEdit.value="";
+        }
+    }
+
     React.useEffect(() => {
         return () => {
            if (reactmems.length == 0) alert("Warning: React class is empty now")
@@ -49,13 +84,14 @@ function Component(props) {
                 var age = reactmem.age;
                 return (
                     <div className="user-list">
-                       <User key={reactmem.name} name={reactmem.name} age={reactmem.age} />
+                       <User key={index} name={reactmem.name} age={reactmem.age} />
                       
                        <button
                        onClick={() => {
                        javamems.push({name: name, age: age})
                        reactmems.splice(index,1)
                        setReactmems([...reactmems])}}>tranfer</button>
+                       <button onClick={() => handleEdit(name,age,index)}>edit</button>
                     </div>
                 )
             }) : "Empty class"}</span>
@@ -66,13 +102,14 @@ function Component(props) {
                 var age = javamem.age;
                 return (
                     <div className="user-list">
-                       <User key={javamem.name} name={javamem.name} age={javamem.age} />
+                       <User key={index} name={javamem.name} age={javamem.age} />
                       
                        <button
                        onClick={() => {
                        reactmems.push({name: name, age: age})
                        javamems.splice(index,1)
                        setJavamems([...javamems])}}>tranfer</button>
+                       <button onClick={() => handleEdit (name,age,index)}>edit</button>
                     </div>
                 )
             }) : "Empty class"}</span>
@@ -88,6 +125,20 @@ function Component(props) {
                   </label>
                </div>
                <input type="submit" value="add member" />
+            </form>
+
+            <h1 className="title">Form edit</h1>
+            <form onSubmit={handleUpdate}>
+               <input type="text" id="index-user" />
+               <div className="info-input">
+                  <label>
+                     Name: <input type="text" id="nameEdit"/>
+                  </label>
+                  <label>
+                     Age: <input type="text" id="ageEdit" />
+                  </label>
+               </div>
+               <input type="submit" value="update" />
             </form>
         </div>
     )

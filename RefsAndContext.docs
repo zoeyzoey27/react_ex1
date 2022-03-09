@@ -1,0 +1,150 @@
+Nội dung 1: Refs
+
+1. Khái niệm
+- React refs là cách mà chúng ta có thể để tham chiếu một element trong DOM hoặc từ một class component con đến component cha. 
+=> Cho phép chúng ta đọc và chỉnh sửa các element đó.
+- Khi một element được gán vào một ref nó sẽ cho phép chúng ta sửa đổi cũng như truy cập vào element đó ngay lập tức và không 
+cần sử dụng đến props hay state để component re-render lại. Nó giống cho phép việc can thiệp vào DOM như trong Javascript DOM:
+document.getElementsByTagName('h1').innerHTML = 'Hà Thị Phương Loan'
+- Chúng ta có thể can thiệp trực tiếp vào DOM qua refs mà không cần thông qua việc render. Mặc dù đây là cách thuận tiện mà 
+không cần phải sử dụng đến state, props nhưng điều này React không khuyến khích. Bởi khi các DOM bị thay đổi sẽ ảnh hưởng một 
+phần nào đó đến quá trình render các component => Chỉ nên sử dụng React refs để can thiệp vào DOM trong trường hợp cần thiết.
+
+2. Sử dụng React Refs
+- Dùng string (không được khuyến khích): <div ref="stringGiday" />
+- Dùng callback ref: <div ref={ref => {this.inputRef = ref }} />
+- Dùng API: createRef
+- Dùng hook: useRef
+
+3. createRef
+Refs thường được chỉ định trong hàm tạo trong constructor ở class component và như một biến ở functional component
+=> Sau đó được gắn vào một element trong hàm render().
+VD: Tự động đặt set focus cho input
+class SimpleRef extends Component {
+  constructor() {
+    super();
+    // 1 - Định nghĩa ref
+    this.inputRef = React.createRef();
+  }
+
+  // 3 - gọi hàm focus trên ref
+  onClick = () => this.inputRef.current.focus();
+
+  render() {
+    return (
+      <>
+        <input ref={this.inputRef} />
+        <!-- 2 - gắn ref mới định nghĩa cho element -->
+        <button onClick={this.onClick}>Click để focus</button>
+      </>
+    )
+  }
+}
+(*) createRef an toàn cho mọi trường hợp.
+
+4. callback refs
+VD: 
+class SimpleCallbackRef extends Component {
+  onClick = () => this.inputRef.focus();
+
+  render() {
+    return (
+      <>
+        <input ref={ref => { this.inputRef = ref; }} />
+        <button onClick={this.onClick}>Click để focus</button>
+      </>
+    )
+  }
+}
+=> Với ví dụ trên, Khai báo ref bằng inline function, nó sẽ gọi 2 lần trong quá trình update: 
++ lần đầu tiên với giá trị null
++ lần thứ hai là khi có DOM element
+vì mỗi lần render là một inline function khác nhau, React sẽ phải xóa giá trị ref cũ rồi setup ref mới.
+(*) callback refs được khuyến khích dùng trong trường hợp khi chúng ta muốn tạo một danh sách element động.
+
+5. Truyền Ref từ cha xuống con
+- Forwarding Refs là một kỹ thuật để tự động chuyển một ref từ một component tới component con, cho phép 
+component cha có thể tham chiếu tới các element của component con để đọc và chỉnh sửa nó.
+- React cung cấp cho chúng ta một cách thức để thực hiện việc chuyển tiếp một ref, chúng ta sẽ bao component 
+con trong React.forwardRef()
+VD:
+//Component Con
+const MyInput = React.forwardRef((props, ref) => {
+   return(<input name={props.name} ref={ref} />);
+});
+// Component Cha
+const MyComponent = () => {
+   let ref = React.createRef();
+   return (
+     <MyInput
+       name="email"
+       ref={ref}
+     />
+   );
+}
+Ví dụ trên sử dụng React.forwardRef(), ở đây nó cung cấp cho chúng ta 2 tham số lần lượt là props và refs, cho 
+chúng ta nhận về giá trị của props và refs từ component cha.
+
+6. useRef hook
+- Nếu là function component, khi dùng createRef mỗi lần return là mỗi lần tạo ref mới
+=> sử dụng hook useRef sẽ giúp chúng ta sẽ có một cái ref xài đời này qua đời kia dù bao nhiều lần update, cho đến khi nó ra đi (Unmount)
+VD: 
+const FunctionComponentWithRef  = () => {
+    const textInput = React.useRef(null);
+
+    return (
+        <>
+            <input ref={textInput} />
+            <button onClick={() => textInput.current.focus()}>
+            Click to Focus
+            </button>
+        </>
+    )
+}
+
+KẾT LUẬN VỀ REFS:
+- Không nên dùng Refs nhiều, chỉ dùng khi cần thiết
+- string ref không được khuyến khích sử dụng
+- Dùng callback ref khi muốn tạo element động
+- Nếu là class component, dùng createRef an toàn nhất
+- Nếu là function component, nên dùng useRef 
+- Dùng forwardRef khi component cha cần truy cập đến component con
+
+Nội dung 2: Context
+1. Khái niệm
+Context cung cấp phương pháp truyền data xuyên suốt component tree mà không cần phải truyền props một cách thủ công qua từng level.
+
+2. Context API trong ReactJS
+- React.createContext
+const MyContext = React.createContext(defaultValue);
+Khởi tạo một Context Object, giá trị của defaultValue là giá trị mặc định của props value trong Provider.
+- Context.Provider
+<MyContext.Provider value={/* some value */}>
+Mỗi Context Object phải đi kèm với một Provider, nó cho phép bạn nhận về sự thay đổi của context.
+- Context.Consumer
+<MyContext.Consumer>
+  {value => /* render something based on the context value */}
+</MyContext.Consumer>
+Một React component được khởi chạy mỗi khi gía trị của context thay đổi, và nhận về giá trị của context đó.
+- Context.displayName
+const MyContext = React.createContext(/* some value */);
+MyContext.displayName = 'MyDisplayName';
+ 
+<MyContext.Provider> // "MyDisplayName.Provider" in DevTools
+<MyContext.Consumer> // "MyDisplayName.Consumer" in DevTools
+Đặt tên cho Context, tên này sẽ được hiện thị trong DevTools.
+- Class.contextType
+class MyClass extends React.Component {
+  render() {
+    let value = this.context;
+  }
+}
+MyClass.contextType = MyContext;
+contextType là một thuộc tính của class được tạo bởi React.createContext() được dùng để lấy giá trị của context.
+
+3. Sử dụng Context trong ReactJS
+3 bước
+Bước 1: Khởi tạo object context bằng phương thức React.createContext(), sau đó chúng ta sẽ nhận được 1 object bao 
+gồm các thuộc tính quan trọng như Provider và Consumer.
+Bước 2: Sử dụng Provider bọc quanh các component, và truyền giá trị vào props value
+Bước 3: Thêm Consumer vào bất cứ đâu mà bạn muốn chia sẻ context, bạn có thể lấy giá trị của context thông qua props.chirlden.
