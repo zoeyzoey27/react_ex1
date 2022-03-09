@@ -36,15 +36,15 @@ function Component(props) {
 
     React.useEffect(() => {
         return () => {
-           if (reactmems.length == 0) alert("React class is empty now")
-           else if (javamems.length ==0) alert ("Java class is empty now")
+           if (reactmems.length == 0) alert("Warning: React class is empty now")
+           else if (javamems.length ==0) alert ("Warning: Java class is empty now")
         }
     })
 
     return (
         <div>
             <h1 className="title">List member of React class</h1>
-            <span>{reactmems.map((reactmem,index) => {
+            <span>{reactmems.length>0 ? reactmems.map((reactmem,index) => {
                 var name = reactmem.name;
                 var age = reactmem.age;
                 return (
@@ -58,10 +58,10 @@ function Component(props) {
                        setReactmems([...reactmems])}}>tranfer</button>
                     </div>
                 )
-            })}</span>
+            }) : "Empty class"}</span>
 
             <h1 className="title">List member of Java class</h1>
-            <span >{javamems.map((javamem,index) => {
+            <span >{javamems.length>0 ? javamems.map((javamem,index) => {
                 var name = javamem.name;
                 var age = javamem.age;
                 return (
@@ -75,7 +75,7 @@ function Component(props) {
                        setJavamems([...javamems])}}>tranfer</button>
                     </div>
                 )
-            })}</span>
+            }) : "Empty class"}</span>
             
             <h1 className="title">Form add member</h1>
             <form onSubmit={handleSubmit}>
