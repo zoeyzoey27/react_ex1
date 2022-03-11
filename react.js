@@ -1,12 +1,13 @@
 const divTag = document.getElementById("container");
 
 const Member = (props) => {
-    const {name, age, handleTranfer, handleEdit} = props;
+    const {name, age, classType, handleTranfer, handleEdit, handleDelete} = props;
     return (
         <div className="member-list">
              <div>Name: {props.name} - Age: {props.age}</div>
              <button className="user-list-button" onClick={() => handleTranfer()}>tranfer</button>
              <button className="user-list-button" onClick={() => handleEdit()}>edit</button>
+             <button className="user-list-button" onClick={() => handleDelete()}>delete</button>
         </div>
     )
 }
@@ -14,46 +15,95 @@ const Member = (props) => {
 const INIT_DATA = {
     name: "",
     age: "",
-    classType: "react"
+    classType: 'react'
+}
+
+const SORT = {
+    NO: 0,
+    UP: 1,
+    DOWN: 2,
 }
 
 function Component(props) {
-    const [reactMembers, setReactMember] = React.useState([
-        {name: "Đinh Tuấn Anh", age: 20},
-        {name: "Ngụy Minh Thắng", age: 21},
-        {name: "Nguyễn Anh Thư", age: 22}
-    ]);
+    const [reactMembers, setReactMember] = React.useState(() => {
+        const members = JSON.parse(localStorage.getItem("members"));
+        if (!members || !members.reactMembers) {
+            return []
+        }
+        return members.reactMembers
+    });
 
-    const [javaMembers, setJavaMember] = React.useState([
-        {name: "Bế Trọng Hiếu", age: 20},
-        {name: "Ngô Huỳnh Đức", age: 19},
-        {name: "Nguyễn Mạnh Dũng", age: 18}
-    ]);
+    const [javaMembers, setJavaMember] = React.useState(() => {
+        const members = JSON.parse(localStorage.getItem("members"));
+        if (!members || !members.javaMembers) {
+            return []
+        }
+        return members.javaMembers
+    });
+
+    const saveData = () => {
+        localStorage.setItem("members", JSON.stringify({
+            javaMembers,
+            reactMembers,
+        }))
+    }
 
     React.useEffect(() => {
-        return () => {
-           if (reactMembers.length === 0) alert("Warning: React class is empty now")
-           else if (javaMembers.length === 0) alert ("Warning: Java class is empty now")
+        if (javaMembers.length ===0) {
+            alert("WARNING: java class is empty now")
+        } else if (reactMembers.length === 0) {
+            alert("WARNING: react class is empty now")
         }
-    })
+        saveData();
+    } , [reactMembers.length, javaMembers.length])
 
     const tranferReactToJavaMember = (index) => {
         const el = reactMembers[index];
+        el.classType = "java";
         reactMembers.splice(index, 1);
         javaMembers.push(el);
         setReactMember([...reactMembers]);
         setJavaMember([...javaMembers]);
+        
+       
     }
     const tranferJavaToReactMember = (index) => {
         const el = javaMembers[index];
+        el.classType = "react";
         javaMembers.splice(index, 1);
         reactMembers.push(el);
         setReactMember([...reactMembers]);
         setJavaMember([...javaMembers]);
+      
     }
 
     const [formData, setFormData] = React.useState(INIT_DATA)
-    const [formEdit, setFormEdit] = React.useState(INIT_DATA)
+
+    const [searchName, setSearchName] = React.useState("");
+    const [sortAge, setSortAge] = React.useState(SORT.NO);
+
+    const onEditReactMember = (index) =>{
+        setFormData({
+            ...reactMembers[index],
+            isEdit: true,
+            index: index,
+            originClassType:  reactMembers[index].classType
+            
+         })
+         inputNameRef.current.focus();
+         
+    }
+
+    const onEditJavaMember = (index) =>{
+        setFormData({
+            ...javaMembers[index],
+            isEdit: true,
+            index: index,
+            originClassType: javaMembers[index].classType
+        })
+        inputNameRef.current.focus();
+        
+    }
 
     function handleInput(e) {
         const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -65,72 +115,144 @@ function Component(props) {
 
     function handleSubmit(e) {
         e.preventDefault();
-        if (formData.classType === 'react') {
-            reactMembers.push(formData);
-            setReactMember([...reactMembers])
-        } else {
-            javaMembers.push(formData)
-            setJavaMember([...javaMembers])
-        }
+        if (formData.isEdit) {
+            const {originClassType, index} = formData;
+            console.log(originClassType, formData.classType)
+            if (originClassType !== formData.classType) {
+                if (formData.classType === 'react') {
+                    javaMembers.splice(index, 1);
+                    setJavaMember([...javaMembers]);
+                    reactMembers.push(formData)
+                    setReactMember([...reactMembers])
+                } else {
+                    reactMembers.splice(index, 1);
+                    setReactMember([...reactMembers]);
+                    javaMembers.push(formData)
+                    setJavaMember([...javaMembers])
+                }
+            } else {
+                if (formData.classType === 'react') {
+                    reactMembers[index] = formData;
+                    setReactMember([...reactMembers])
+                } else {
+                    javaMembers[index] = formData;
+                    setJavaMember([...javaMembers])
+                }
+            }
+       } else {
+            if (formData.classType === 'react') {
+                reactMembers.push(formData);
+                setReactMember([...reactMembers])
+            } else {
+                javaMembers.push(formData)
+                setJavaMember([...javaMembers])
+            }
+       }
         setFormData(INIT_DATA)
     }
 
-    let isReact = true;
-    const handleEditInfo = (name,age,index) => {
-        let nameEdit = document.getElementById("nameEdit");
-        let ageEdit = document.getElementById("ageEdit"); 
-        let indexMember = document.getElementById("index-member"); 
-        nameEdit.value=name;
-        ageEdit.value=age;
-        indexMember.value = index;
-        if (!reactMembers.some(el => el.name == nameEdit.value && el.age == ageEdit.value)) isReact = false;
+    const getUsers = (list) => {
+        let res = [...list];
+        if (searchName) {
+             res = res.filter((el) =>  el.name.toLowerCase().includes(searchName.toLowerCase()))
+        }
+        if (sortAge !== SORT.NO) {
+             res.sort((a, b) => {
+                 if (sortAge === SORT.UP) {
+                     return parseInt(a.age) - parseInt(b.age)
+                 } 
+                  if (sortAge === SORT.DOWN) {
+                     return parseInt(b.age) - parseInt(a.age)
+                 }
+                 
+             })
+        }
+        return res;
     }
 
-    function handleUpdate(evt) {
-        evt.preventDefault();
-        let nameEdit = document.getElementById("nameEdit");
-        let ageEdit = document.getElementById("ageEdit"); 
-        let indexMember = document.getElementById("index-member"); 
-        if (nameEdit.value == "" || ageEdit.value == ""){
-            alert("Vui lòng nhập đầy đủ thông tin")
-        }
-        else{
-            if (isReact){
-                reactMembers.splice(indexMember.value,1, {name: nameEdit.value, age: ageEdit.value});
-                setReactMember([...reactMembers]);
-            }
-            else {
-                javaMembers.splice(indexMember.value,1, {name: nameEdit.value, age: ageEdit.value});
-                setJavaMember([...javaMembers]);
-            }
-            nameEdit.value="";
-            ageEdit.value="";
+    const reactMemberToRender = React.useMemo(() => getUsers(reactMembers), [reactMembers, sortAge]);
+    const javaMemberToRender = React.useMemo(() => getUsers(javaMembers), [javaMembers, sortAge]);
+
+  
+    let inputNameRef = React.useRef();
+    
+    const getSortText = () => {
+         if (sortAge === SORT.NO) {
+             return "no"
+         }
+         if (sortAge === SORT.UP) {
+             return "up"
+         }
+         return "down"
+    }
+ 
+    const getSortTextCallback = React.useCallback(() => getSortText(), [sortAge])
+ 
+    const handleSort = () => {
+        if (sortAge  === SORT.DOWN) {
+            setSortAge(SORT.NO)
+        }  else if (sortAge  === SORT.NO) {
+             setSortAge(SORT.UP)
+        } else {
+             setSortAge(SORT.DOWN)
         }
     }
 
+    const SortTitle = (props) => {
+        React.useEffect(() => {
+        }, [props.getSortText])
+        return (
+            <React.Fragment>Sort: {props.getSortText()}</React.Fragment>
+        )
+    }
+
+    const  deleteMember = (user,index) => {
+         if (reactMembers.includes(user)){
+             reactMembers.splice(index,1);
+             setReactMember([...reactMembers]);
+         }
+         else {
+             javaMembers.splice(index,1);
+             setJavaMember([...javaMembers]);
+         }
+    }
 
     return (
         <div>
+            <div className="controls">
+                <div className="search-box">
+                    <input type="text" id="search-input" placeholder="Nhập tên người dùng để tìm kiếm"
+                     value={searchName} onChange={(e) => setSearchName(e.target.value)} />
+                </div>
+                <button onClick={() => handleSort()}><SortTitle getSortText={getSortTextCallback}/></button>
+            </div>
             {/* React class */}
             <h1 className="title">List member of React class</h1>
-            {reactMembers.length > 0 ? reactMembers.map((user, index) => {
-                return <Member name={user.name} age={user.age}
-                    key={index} handleTranfer={() => tranferReactToJavaMember(index)} handleEdit = {() => handleEditInfo(user.name,user.age,index)}/>
+            {reactMembers.length > 0 ? reactMemberToRender==0 ? <div className="empty-noti">Không có dữ liệu</div> : 
+            reactMemberToRender.map((user, index) => {
+                return <Member name={user.name} age={user.age} classType="react" key={index} 
+                       handleTranfer={() => tranferReactToJavaMember(index)} 
+                       handleEdit = {() => onEditReactMember(index)}
+                       handleDelete = {() => deleteMember(user,index)}/>
             }) : <div className="empty-noti">Empty class</div>}
 
             {/* Java class */}
-            <h1 className="title">list member of Java class</h1>
-            {javaMembers.length > 0 ?javaMembers.map((user,index) => {
-                return <Member name={user.name} age={user.age}
-                key={index} handleTranfer={() => tranferJavaToReactMember(index)} handleEdit = {() => handleEditInfo(user.name,user.age,index)}/>
+            <h1 className="title">List member of Java class</h1>
+            
+            {javaMembers.length > 0 ? javaMemberToRender==0 ? <div className="empty-noti">Không có dữ liệu</div> : 
+            javaMemberToRender.map((user,index) => {
+                return <Member name={user.name} age={user.age} classType="java" key={index} 
+                        handleTranfer={() => tranferJavaToReactMember(index)} 
+                        handleEdit = {() => onEditJavaMember(index)}
+                        handleDelete = {() => deleteMember(user,index)}/>
             }) : <div className="empty-noti">Empty class</div> }
             
             {/* Form add member */}
-            <h1 className="title">Form add member</h1>
+            <h1 className="title">Form manager</h1>
             <form onSubmit={handleSubmit}>
                <div className="info-input">
                   <label> Name: </label>
-                  <input type="text" name="name" value={formData.name} onChange={(e) => handleInput(e)} />
+                  <input type="text" name="name" value={formData.name} onChange={(e) => handleInput(e)}  ref={inputNameRef} />
                   <label> Age: </label>
                   <input type="text" name="age" value={formData.age} onChange={(e) => handleInput(e)} />
                   <select name="classType" onChange={(e) => handleInput(e)} value={formData.classType}>
@@ -138,20 +260,9 @@ function Component(props) {
                       <option value="java">Java class</option>
                   </select>
                </div>
-               <input type="submit" value="Add member" />
+               <input type="submit" value="Submit" />
             </form>
 
-            <h1 className="title">Form edit</h1>
-            <form onSubmit={handleUpdate}>
-               <input type="text" id="index-member" />
-               <div className="info-input">
-                  <label> Name: </label>
-                  <input type="text" name="nameEdit" id="nameEdit" />
-                  <label> Age: </label>
-                  <input type="text" name="ageEdit" id="ageEdit" />
-               </div>
-               <input type="submit" value="Update" />
-            </form>
         </div>
     )
 }
